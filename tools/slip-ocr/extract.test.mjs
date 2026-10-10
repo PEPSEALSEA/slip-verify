@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { bankNameFromCode, cleanUploadFilename, compareFilenameToReference, compareReferences, crc16Ccitt, dateFromKPlusReference, dateFromScbReference, dateFromWalletQr, dateTimeFromBangkokBankReference, extractEnglishDestination, extractEnglishRecipientLine, extractKPlusAmount, extractKPlusPromptPayReceiver, extractKPlusRecipientLine, extractLabeledAmount, extractLabeledParties, extractTextFields, parseMiniQr, timeFromOcrDateLine } from './extract.mjs';
+import { bankNameFromCode, cleanUploadFilename, compareFilenameToReference, compareReferences, crc16Ccitt, dateFromKPlusReference, dateFromScbReference, dateFromWalletQr, dateTimeFromBangkokBankReference, extractEnglishDestination, extractEnglishRecipientLine, extractIBankAmount, extractKPlusAmount, extractKPlusPromptPayReceiver, extractKPlusRecipientLine, extractLabeledAmount, extractLabeledParties, extractTextFields, parseMiniQr, timeFromOcrDateLine } from './extract.mjs';
 
 test('Thai slip text extracts transfer amount, not fee, and Buddhist date', () => {
   const fields = extractTextFields(`โอนเงินสำเร็จ\n9 ต.ค. 69 19:34 น.\nด.ช. ตัวอย่าง\nธ.กสิกรไทย\nนาย ตัวอย่าง ผู้รับ\nธ.กสิกรไทย\nจำนวน:\n123.45 บาท\nค่าธรรมเนียม:\n0.00 บาท`);
@@ -42,6 +42,13 @@ test('other bank amounts retain thousands despite OCR punctuation and spaces', (
   assert.equal(extractLabeledAmount('จํานวนเงิน 22 749.00 บาท'), 22749);
   assert.equal(extractLabeledAmount('จํานวนเงิน 1,.600.00 บาท'), 1600);
   assert.equal(extractLabeledAmount('จํานวนเงิน 4 016.93'), 4016.93);
+});
+
+test('iBank amount crop accepts one value and rejects ambiguous or fee-only text', () => {
+  assert.equal(extractIBankAmount('190.00'), 190);
+  assert.equal(extractIBankAmount('1,900.50 บาท'), 1900.5);
+  assert.equal(extractIBankAmount('190.00 0.00'), null);
+  assert.equal(extractIBankAmount('0.00'), null);
 });
 
 test('other bank party labels distinguish names from payment channels', () => {

@@ -125,6 +125,13 @@ function extractAmountFromIsolatedLine(text) {
   return integer && Number.isFinite(amount) && amount > 0 ? amount : null;
 }
 
+export function extractIBankAmount(text) {
+  const amounts = [...text.matchAll(/(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\.(\d{2})(?!\d)/g)];
+  if (amounts.length !== 1) return null;
+  const amount = Number(`${amounts[0][1].replace(/,/g, '')}.${amounts[0][2]}`);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
 export function extractKPlusAmount(text) {
   for (const line of normalizeText(text).split(/\r?\n/)) {
     const match = line.match(/([0-9][0-9,.]*\.[0-9]{2})\s*บาท/);
@@ -330,6 +337,27 @@ export async function readSlip(imagePathOrBytes, { expectedAmount = null, filena
   try {
     recognized = (await worker.recognize(imageBytes)).data;
     fields = extractTextFields(recognized.text);
+    if (qr?.crc_valid && qr.sender_bank_code === '066' && /(?:ไอแบงก์|ibank)/i.test(recognized.text)) {
+      // In this iBank layout Thai OCR can turn the green 190.00 into 1906.06.
+      // Read only the amount value, excluding the fee printed on the next row.
+      try {
+        const { width, height } = await sharp(imageBytes).metadata();
+        if (width >= 500 && height >= 700) {
+          const region = { left: Math.floor(width * .62), top: Math.floor(height * .625),
+            width: Math.floor(width * .23), height: Math.floor(height * .065) };
+          const crop = await sharp(imageBytes).extract(region)
+            .resize({ width: region.width * 3 }).png().toBuffer();
+          const englishWorker = await createWorker('eng', 1, langPath
+            ? { langPath, gzip: false, cacheMethod: 'none' } : undefined);
+          try {
+            await englishWorker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_LINE });
+            fields.amount = extractIBankAmount((await englishWorker.recognize(crop)).data.text);
+          } finally {
+            await englishWorker.terminate();
+          }
+        }
+      } catch { fields.amount = null; }
+    }
     if (qr?.crc_valid && qr.sender_bank_code !== '004') {
       const parties = extractLabeledParties(recognized.text);
       fields.sender_name_candidate ??= parties.sender;
