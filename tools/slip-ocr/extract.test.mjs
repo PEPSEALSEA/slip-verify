@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { bankNameFromCode, cleanUploadFilename, compareFilenameToReference, compareReferences, crc16Ccitt, dateFromKPlusReference, dateFromScbReference, dateFromWalletQr, dateTimeFromBangkokBankReference, extractEnglishDestination, extractEnglishRecipientLine, extractIBankAmount, extractKPlusAmount, extractKPlusPromptPayReceiver, extractKPlusRecipientLine, extractLabeledAmount, extractLabeledParties, extractTextFields, parseMiniQr, timeFromOcrDateLine } from './extract.mjs';
+import { bankNameFromCode, cleanUploadFilename, compareFilenameToReference, compareReferences, crc16Ccitt, dateFromKPlusReference, dateFromScbReference, dateFromWalletQr, dateTimeFromBangkokBankReference, extractEnglishDestination, extractEnglishRecipientLine, extractIBankAmount, extractIBankRecipient, extractKPlusAmount, extractKPlusPromptPayReceiver, extractKPlusRecipientLine, extractLabeledAmount, extractLabeledParties, extractTextFields, parseMiniQr, timeFromOcrDateLine } from './extract.mjs';
 
 test('Thai slip text extracts transfer amount, not fee, and Buddhist date', () => {
   const fields = extractTextFields(`โอนเงินสำเร็จ\n9 ต.ค. 69 19:34 น.\nด.ช. ตัวอย่าง\nธ.กสิกรไทย\nนาย ตัวอย่าง ผู้รับ\nธ.กสิกรไทย\nจำนวน:\n123.45 บาท\nค่าธรรมเนียม:\n0.00 บาท`);
@@ -49,6 +49,13 @@ test('iBank amount crop accepts one value and rejects ambiguous or fee-only text
   assert.equal(extractIBankAmount('1,900.50 บาท'), 1900.5);
   assert.equal(extractIBankAmount('190.00 0.00'), null);
   assert.equal(extractIBankAmount('0.00'), null);
+});
+
+test('iBank recipient uses the name immediately above the PromptPay account', () => {
+  assert.equal(extractIBankRecipient('ง  ตัวอย่าง(ประเทศไทย) จํากัด\nงง  พร้อมเพย์ * **** ****9 67 5'), 'ตัวอย่าง(ประเทศไทย) จำกัด');
+  assert.equal(extractIBankRecipient('นาย ตัวอย่าง ผู้รับ\nพร้อมเพย์ * **** ****9 67 5'), 'นาย ตัวอย่าง ผู้รับ');
+  assert.equal(extractIBankRecipient('ค่าธรรมเนียม 0.00 บาท\nพร้อมเพย์ * **** ****9 67 5'), null);
+  assert.equal(extractIBankRecipient('ตัวอย่าง(ประเทศไทย) จำกัด\n190.00 บาท'), null);
 });
 
 test('other bank party labels distinguish names from payment channels', () => {

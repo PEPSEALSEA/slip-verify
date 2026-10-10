@@ -132,6 +132,21 @@ export function extractIBankAmount(text) {
   return Number.isFinite(amount) && amount > 0 ? amount : null;
 }
 
+export function extractIBankRecipient(text) {
+  const lines = normalizeText(text).split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const promptPayIndex = lines.findIndex(line => /พร้อม\s*เพย์/.test(line));
+  if (promptPayIndex < 1) return null;
+  for (let index = promptPayIndex - 1; index >= Math.max(0, promptPayIndex - 2); index--) {
+    const candidate = lines[index].replace(/^[^\p{Script=Thai}]*/u, '')
+      .replace(/^\p{Script=Thai}{1,2}\s{2,}/u, '').trim();
+    const company = candidate.match(/^(?:บริษัท\s*)?\p{Script=Thai}[\p{Script=Thai}().,\s&-]{5,}จำกัด/u)?.[0];
+    if (company && !/\d/.test(company)) return company.replace(/\s{2,}/g, ' ').trim();
+    const person = candidate.match(/^(?:นาย|นางสาว|นาง|น\.ส\.)\s*\p{Script=Thai}[^\d\r\n]{4,}/u)?.[0];
+    if (person) return person.replace(/\s{2,}/g, ' ').trim();
+  }
+  return null;
+}
+
 export function extractKPlusAmount(text) {
   for (const line of normalizeText(text).split(/\r?\n/)) {
     const match = line.match(/([0-9][0-9,.]*\.[0-9]{2})\s*บาท/);
@@ -357,6 +372,7 @@ export async function readSlip(imagePathOrBytes, { expectedAmount = null, filena
           }
         }
       } catch { fields.amount = null; }
+      fields.receiver_name_candidate ??= extractIBankRecipient(recognized.text);
     }
     if (qr?.crc_valid && qr.sender_bank_code !== '004') {
       const parties = extractLabeledParties(recognized.text);
