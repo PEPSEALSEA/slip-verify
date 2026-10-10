@@ -1,0 +1,23 @@
+# Public release allowlist. Files not listed below stay local.
+/*
+!/.gitattributes
+!/.gitignore
+!/README.md
+!/tools/
+
+/tools/*
+!/tools/slip-ocr/
+
+/tools/slip-ocr/*
+!/tools/slip-ocr/Dockerfile
+!/tools/slip-ocr/README.md
+!/tools/slip-ocr/package.json
+!/tools/slip-ocr/package-lock.json
+!/tools/slip-ocr/api.mjs
+!/tools/slip-ocr/api.test.mjs
+!/tools/slip-ocr/audit.mjs
+!/tools/slip-ocr/cli.mjs
+!/tools/slip-ocr/extract.mjs
+!/tools/slip-ocr/extract.test.mjs
+!/tools/slip-ocr/web.mjs
+!/tools/slip-ocr/web.html

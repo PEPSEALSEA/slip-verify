@@ -1,0 +1,17 @@
+{
+  "name": "hamsterhub-slip-ocr-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "read": "node cli.mjs",
+    "api": "node api.mjs",
+    "web": "node web.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "sharp": "^0.34.5",
+    "tesseract.js": "^7.0.0"
+  }
+}

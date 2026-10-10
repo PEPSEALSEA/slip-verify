@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Slip Lab — ทดลองอ่านสลิป</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #20322e; background: #f5f5ef; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; min-height: 100vh; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1120px; margin: auto; padding: 28px 24px 72px; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 26px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
+    .mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: #173e35; color: #fff; font-size: 20px; }
+    .top-note { color: #587069; font-size: 13px; }
+    .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 32px; align-items: center; background: #e9eee7; border: 1px solid #d7e0d6; border-radius: 28px; padding: 48px; overflow: hidden; }
+    .eyebrow { margin: 0 0 14px; color: #357668; font-weight: 800; letter-spacing: .12em; font-size: 12px; text-transform: uppercase; }
+    h1 { font-size: clamp(32px, 4.5vw, 54px); line-height: 1.12; letter-spacing: -.055em; margin: 0 0 18px; }
+    .hero p:last-child { color: #536a62; line-height: 1.8; max-width: 46ch; margin-bottom: 0; }
+    .hero-art { justify-self: end; width: min(100%, 330px); aspect-ratio: 1.16; border-radius: 24px; background: #d2e3d7; display: grid; place-items: center; transform: rotate(4deg); box-shadow: 18px 18px 0 #c5d9cc; }
+    .receipt { background: #fffefb; border-radius: 16px; width: 70%; padding: 24px; box-shadow: 0 18px 35px #315f4640; transform: rotate(-8deg); }
+    .receipt .bar { height: 10px; width: 72%; border-radius: 20px; background: #bfd2c5; margin-bottom: 20px; }
+    .receipt .bar.short { width: 42%; height: 7px; opacity: .7; margin-bottom: 11px; }
+    .receipt strong { font-size: 26px; color: #174a3d; }
+    .receipt .qr { width: 51px; height: 51px; margin-top: 18px; background: repeating-linear-gradient(90deg,#254e44 0 4px,#fff 4px 7px); border: 5px solid #fff; outline: 1px solid #d6e0d9; }
+    .grid { display: grid; grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr); gap: 22px; margin-top: 24px; }
+    .panel { background: #fff; border: 1px solid #e0e6df; border-radius: 24px; padding: 28px; box-shadow: 0 8px 30px #29403408; }
+    .panel h2 { margin: 0 0 6px; font-size: 23px; letter-spacing: -.035em; }
+    .sub { margin: 0 0 22px; color: #6b7d74; line-height: 1.6; font-size: 14px; }
+    .drop { display: grid; place-items: center; min-height: 230px; padding: 22px; border: 2px dashed #b5cbc0; border-radius: 18px; background: #f7faf6; text-align: center; transition: .2s; cursor: pointer; overflow: hidden; }
+    .drop:hover, .drop.drag { border-color: #2e8068; background: #eff8f1; }
+    .drop.has-file { padding: 10px; }
+    .drop img { max-width: 100%; max-height: 320px; object-fit: contain; border-radius: 11px; }
+    .upload-icon { font-size: 34px; color: #2a735e; margin-bottom: 8px; }
+    .drop strong { display: block; margin-bottom: 6px; }
+    .drop span { color: #74877e; font-size: 13px; }
+    label.field { display: block; margin: 22px 0 8px; font-weight: 700; font-size: 14px; }
+    .amount { display: flex; align-items: center; border: 1px solid #cedad0; border-radius: 13px; overflow: hidden; }
+    .amount input { width: 100%; border: 0; outline: 0; padding: 14px 16px; color: #20322e; background: #fff; }
+    .amount span { padding: 0 16px; color: #63786b; }
+    .hint { color: #849188; font-size: 12px; margin: 7px 0 20px; }
+    .datum .hint { display: block; margin: 7px 0 0; }
+    .primary { display: block; width: 100%; border: 0; border-radius: 13px; background: #175940; color: #fff; font-weight: 800; padding: 15px; }
+    .primary:hover:not(:disabled) { background: #0f4934; }
+    .primary:disabled { opacity: .55; cursor: wait; }
+    .result-empty { display: grid; place-items: center; min-height: 364px; text-align: center; color: #74877d; }
+    .empty-icon { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 18px; background: #ecf4ec; color: #2d8065; font-size: 28px; margin: 0 auto 15px; }
+    .status { display: inline-block; padding: 7px 12px; border-radius: 999px; background: #fff0d7; color: #81541b; font-size: 12px; font-weight: 800; }
+    .result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 19px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .datum { min-width: 0; background: #f7f9f5; border: 1px solid #e9eee7; padding: 15px; border-radius: 13px; }
+    .datum.wide { grid-column: 1 / -1; }
+    .datum small { display: block; color: #73877b; margin-bottom: 7px; }
+    .datum strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
+    .datum .muted { color: #99a69b; }
+    .notice { margin-top: 17px; padding: 15px; border-radius: 13px; background: #fff8ea; color: #785c2d; font-size: 13px; line-height: 1.7; }
+    .errors { margin-top: 14px; color: #a44030; font-size: 14px; line-height: 1.6; }
+    details { margin-top: 18px; color: #5d7567; font-size: 13px; }
+    summary { cursor: pointer; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f6f2; padding: 14px; border-radius: 10px; max-height: 220px; overflow: auto; }
+    .foot { color: #829084; text-align: center; font-size: 12px; margin-top: 28px; }
+    @media (max-width: 760px) { .shell { padding: 18px 14px 48px; } .top-note { display: none; } .hero { grid-template-columns: 1fr; padding: 32px 26px; } .hero-art { display: none; } .grid { grid-template-columns: 1fr; } .panel { padding: 22px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top"><div class="brand"><span class="mark">↗</span> Slip Lab</div><span class="top-note">ทดลองอ่านสลิปบน Raspberry Pi</span></header>
+    <section class="hero">
+      <div><p class="eyebrow">LOCAL OCR TEST</p><h1>ลองอ่านสลิป<br>ในไม่กี่คลิก</h1><p>อัปโหลดภาพสลิปเพื่อดูข้อมูลที่ระบบอ่านได้จากตัวอักษรและ QR ผลลัพธ์นี้ใช้ช่วยตรวจสอบเบื้องต้นเท่านั้น</p></div>
+      <div class="hero-art" aria-hidden="true"><div class="receipt"><div class="bar"></div><div class="bar short"></div><strong>฿ 1,250.00</strong><div class="qr"></div></div></div>
+    </section>
+    <div class="grid">
+      <section class="panel" aria-labelledby="upload-title">
+        <h2 id="upload-title">ส่งภาพเพื่อทดลอง</h2><p class="sub">รองรับ JPG, PNG และ WebP ขนาดไม่เกิน 8 MB</p>
+        <input id="file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        <div id="drop" class="drop" role="button" tabindex="0" aria-label="เลือกภาพสลิป"><div id="drop-content"><div class="upload-icon">⇧</div><strong>คลิกหรือวางภาพสลิปที่นี่</strong><span>ภาพจะถูกประมวลผลบน Pi เครื่องนี้</span></div></div>
+        <label class="field" for="amount">ยอดเงินที่คาดว่าจะได้รับ (ไม่บังคับ)</label>
+        <div class="amount"><input id="amount" type="text" inputmode="decimal" placeholder="เช่น 1250.00"><span>บาท</span></div>
+        <p class="hint">ถ้ากรอกยอด ระบบจะเทียบกับยอดที่ OCR อ่านจากภาพ</p>
+        <button id="submit" class="primary" type="button">อ่านข้อมูลจากสลิป</button>
+        <div id="form-error" class="errors" role="alert" hidden></div>
+      </section>
+      <section class="panel" aria-labelledby="result-title">
+        <div class="result-head"><h2 id="result-title">ผลการอ่าน</h2><span id="status" class="status" hidden>รอตรวจเงินเข้า</span></div>
+        <div id="empty" class="result-empty"><div><div class="empty-icon">▦</div><strong>ยังไม่มีผลการอ่าน</strong><p>เลือกภาพแล้วกด “อ่านข้อมูลจากสลิป”</p></div></div>
+        <div id="result" hidden>
+          <div class="fields">
+            <div class="datum"><small>ยอดที่อ่านได้</small><strong id="out-amount"></strong></div>
+            <div class="datum"><small>เทียบยอดที่กรอก</small><strong id="out-match"></strong></div>
+            <div class="datum wide"><small>วันที่และเวลา</small><strong id="out-date"></strong><span id="out-date-source" class="hint"></span></div>
+            <div class="datum wide"><small>ธนาคาร/ช่องทางจาก QR</small><strong id="out-bank"></strong></div>
+            <div class="datum wide"><small>เลขอ้างอิงจาก QR</small><strong id="out-ref"></strong></div>
+            <div class="datum wide"><small>ชื่อไฟล์ที่อัปโหลด</small><strong id="out-filename"></strong></div>
+            <div class="datum wide"><small>เทียบชื่อไฟล์กับเลขอ้างอิง QR</small><strong id="out-filename-match"></strong><span class="hint">ใช้เป็นข้อมูลประกอบเท่านั้น ชื่อไฟล์อาจเปลี่ยนเมื่อส่งผ่าน LINE</span></div>
+            <div class="datum wide"><small>เลขอ้างอิงที่ OCR อ่านจากภาพ</small><strong id="out-ocr-ref"></strong></div>
+            <div class="datum wide"><small>เทียบเลขอ้างอิง QR กับข้อความบนภาพ</small><strong id="out-ref-match"></strong></div>
+            <div class="datum"><small>ชื่อผู้โอนที่อ่านได้</small><strong id="out-sender"></strong></div>
+            <div class="datum"><small>ผู้รับ/ปลายทางที่อ่านได้</small><strong id="out-receiver"></strong></div>
+          </div>
+          <div class="notice"><strong>ยังไม่ยืนยันการชำระเงิน</strong><br>การอ่านภาพและ QR ไม่ยืนยันว่ามีเงินเข้าบัญชีจริง ต้องตรวจรายการเงินเข้าก่อนอนุมัติ</div>
+          <div id="warnings" class="errors" hidden></div>
+          <details><summary>ดูข้อมูลผลลัพธ์ทั้งหมด</summary><pre id="raw"></pre></details>
+        </div>
+      </section>
+    </div>
+    <p class="foot">Slip Lab · ทดสอบภายในเครือข่ายเท่านั้น · ไม่มีการเก็บภาพบนหน้าเว็บนี้</p>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    const fileInput = $('file');
+    const drop = $('drop');
+    let selectedFile = null;
+    let previewUrl = null;
+    const warningLabels = {
+      slip_qr_unreadable: 'อ่าน QR ไม่ได้', slip_qr_format_unknown: 'รูปแบบ QR ไม่รู้จัก',
+      slip_qr_crc_invalid: 'QR มีข้อมูลไม่สมบูรณ์', amount_unreadable: 'อ่านยอดเงินไม่ได้',
+      date_unreadable: 'อ่านวันที่ไม่ได้', amount_mismatch: 'ยอดเงินไม่ตรงกับที่กรอก',
+      date_ocr_qr_mismatch: 'วันที่จากตัวอักษรและ QR ไม่ตรงกัน',
+      reference_mismatch: 'เลขอ้างอิงจาก QR กับ OCR ไม่ตรงกัน', bank_code_unknown: 'ไม่รู้จักรหัสธนาคารใน QR'
+    };
+
+    function setError(message) { $('form-error').textContent = message; $('form-error').hidden = !message; }
+    function showFile(file) {
+      if (!file) return;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { selectedFile = null; return setError('กรุณาเลือกภาพ JPG, PNG หรือ WebP'); }
+      if (file.size > 8 * 1024 * 1024) { selectedFile = null; return setError('ภาพต้องมีขนาดไม่เกิน 8 MB'); }
+      setError(''); selectedFile = file;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(file);
+      $('drop-content').replaceChildren(Object.assign(document.createElement('img'), { src: previewUrl, alt: 'ภาพสลิปที่เลือก' }));
+      drop.classList.add('has-file');
+    }
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+    drop.addEventListener('dragover', event => { event.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', event => { event.preventDefault(); drop.classList.remove('drag'); showFile(event.dataTransfer.files[0]); });
+
+    function write(id, value) { const el = $(id); el.textContent = value ?? 'อ่านไม่ได้'; el.classList.toggle('muted', value == null); }
+    function showResult(body) {
+      $('empty')?.remove(); $('result').hidden = false; $('status').hidden = false;
+      write('out-amount', body.data?.amount == null ? null : new Intl.NumberFormat('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}).format(body.data.amount) + ' บาท');
+      const match = body.checks?.expected_amount_matches_ocr;
+      write('out-match', match == null ? 'ไม่ได้ระบุยอด' : match ? 'ตรงกัน' : 'ไม่ตรงกัน');
+      write('out-date', body.data?.date ? new Intl.DateTimeFormat('th-TH', {dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Bangkok'}).format(new Date(body.data.date)) : null);
+      $('out-date-source').textContent = body.data?.date_source === 'qr_reference' ? 'อ่านตัวอักษรวันที่ไม่ครบ จึงใช้เวลาที่ถอดจากเลขอ้างอิง QR' : body.data?.date_source === 'qr_date_ocr_time' ? 'วันที่จาก QR และเวลาจากตัวอักษรบนภาพ' : body.data?.date_source === 'printed_ocr' ? 'อ่านจากตัวอักษรบนภาพ' : '';
+      write('out-bank', body.data?.sender_bank_name ? body.data.sender_bank_name + (body.data.sender_bank ? ' (' + body.data.sender_bank + ')' : '') : null);
+      write('out-ref', body.data?.ref);
+      write('out-filename', body.data?.upload_filename);
+      const filenameMatch = body.checks?.upload_filename_matches_qr_reference;
+      write('out-filename-match', filenameMatch == null ? 'เทียบไม่ได้' : filenameMatch ? 'ตรงกัน' : 'ไม่ตรงกัน (อาจถูกเปลี่ยนชื่อ)');
+      write('out-ocr-ref', body.data?.ocr_ref);
+      const refMatch = body.checks?.qr_reference_matches_ocr;
+      write('out-ref-match', refMatch == null ? 'เทียบไม่ได้ — อ่านเลขอ้างอิงไม่ครบ' : refMatch ? 'ตรงกันในภาพ' : 'ไม่ตรงกัน — ควรตรวจด้วยมือ');
+      write('out-sender', body.data?.sender_name);
+      write('out-receiver', body.data?.receiver_name ?? body.data?.receiver_label);
+      const warnings = body.warnings?.map(code => warningLabels[code] ?? code) ?? [];
+      $('warnings').hidden = warnings.length === 0;
+      $('warnings').textContent = warnings.length ? 'ข้อสังเกต: ' + warnings.join(' · ') : '';
+      $('raw').textContent = JSON.stringify(body, null, 2);
+    }
+    $('submit').addEventListener('click', async () => {
+      if (!selectedFile) return setError('กรุณาเลือกภาพสลิปก่อน');
+      const amount = $('amount').value.trim();
+      if (amount && (!/^\d+(?:\.\d{1,2})?$/.test(amount) || Number(amount) <= 0)) return setError('กรุณากรอกยอดเงินเป็นตัวเลขบวก ทศนิยมไม่เกิน 2 ตำแหน่ง');
+      setError(''); $('submit').disabled = true; $('submit').textContent = 'กำลังอ่านภาพ...';
+      try {
+        const image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(selectedFile); });
+        const response = await fetch('/api/slip' + (amount ? '/' + amount : ''), {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({img:image,filename:selectedFile.name})});
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.slug === 'image-too-large' ? 'ภาพใหญ่เกินไป' : body.slug === 'ocr-unavailable' ? 'บริการ OCR ยังไม่พร้อม' : 'อ่านภาพไม่สำเร็จ ลองใช้ภาพที่ชัดขึ้น');
+        showResult(body);
+      } catch (error) { setError(error.message || 'เกิดข้อผิดพลาดในการอ่านภาพ'); }
+      finally { $('submit').disabled = false; $('submit').textContent = 'อ่านข้อมูลจากสลิป'; }
+    });
+  </script>
+</body>
+</html>
